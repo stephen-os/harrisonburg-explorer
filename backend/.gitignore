@@ -1,0 +1,5 @@
+# Evniorments
+.env
+
+# Python
+__pycache__/

@@ -1,47 +1,53 @@
-# docker-compose.yml (in your root directory)
-version: '3.8'
-
+# docker-compose.yml
 services:
   backend:
     build: ./backend
+    container_name: harrisonburg-explorer-backend
     ports:
       - "8000:8000"
     volumes:
       - ./backend:/app
-    environment:
-      - PYTHONPATH=/app
-      - ENVIRONMENT=development
+      - /app/__pycache__
+    env_file:
+      - ./backend/.env
     depends_on:
       - db
     networks:
       - app-network
+    restart: unless-stopped
 
   frontend:
     build: ./frontend
+    container_name: harrisonburg-explorer-frontend
     ports:
       - "3000:3000"
     volumes:
       - ./frontend:/app
       - /app/node_modules
+    env_file:
+      - ./frontend/.env.local
     environment:
       - NEXT_PUBLIC_API_URL=http://localhost:8000
     depends_on:
       - backend
     networks:
       - app-network
+    restart: unless-stopped
 
   db:
     image: postgres:15
+    container_name: harrisonburg-explorer-db
     environment:
-      - POSTGRES_DB=yourapp
-      - POSTGRES_USER=user
-      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=harrisonburg_explorer
+      - POSTGRES_USER=explorer_user
+      - POSTGRES_PASSWORD=explorer_password
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
       - app-network
+    restart: unless-stopped
 
 networks:
   app-network:
