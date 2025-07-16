@@ -1,20 +1,26 @@
-# docker-compose.yml
+# docker-compose.yml (in your root directory)
 services:
   backend:
-    build: ./backend
+    build: 
+      context: ./backend
+      dockerfile: Dockerfile
     container_name: harrisonburg-explorer-backend
     ports:
       - "8000:8000"
+    env_file:
+      - .env
     volumes:
       - ./backend:/app
       - /app/__pycache__
-    env_file:
-      - ./backend/.env
-    depends_on:
-      - db
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
     networks:
       - app-network
-    restart: unless-stopped
 
   frontend:
     build: ./frontend
@@ -25,33 +31,14 @@ services:
       - ./frontend:/app
       - /app/node_modules
     env_file:
-      - ./frontend/.env.local
+      - .env
     environment:
-      - NEXT_PUBLIC_API_URL=http://localhost:8000
+      - NEXT_PUBLIC_API_URL=http://backend:8000
     depends_on:
       - backend
     networks:
       - app-network
-    restart: unless-stopped
-
-  db:
-    image: postgres:15
-    container_name: harrisonburg-explorer-db
-    environment:
-      - POSTGRES_DB=harrisonburg_explorer
-      - POSTGRES_USER=explorer_user
-      - POSTGRES_PASSWORD=explorer_password
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    networks:
-      - app-network
-    restart: unless-stopped
 
 networks:
   app-network:
     driver: bridge
-
-volumes:
-  postgres_data:

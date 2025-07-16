@@ -1,45 +1,49 @@
-# backend/main.py
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from datetime import datetime
+from api.routes import router
+import os
 
-# Import routers
-from routers import test_api
-
-# Create FastAPI instance
+# Create FastAPI app
 app = FastAPI(
-    title="Harrisonburg Explorer API", 
+    title="TSP Route Optimizer API",
+    description="API for calculating optimal routes using traveling salesman problem algorithms",
     version="1.0.0",
-    description="Backend API for Harrisonburg Explorer - TSP route optimization"
+    docs_url="/docs",
+    redoc_url="/redoc"
 )
 
-# Add CORS middleware
+# Add CORS middleware for frontend integration
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://localhost:3001"],
+    allow_origins=["http://localhost:3000", "http://frontend:3000"],  # Frontend URLs
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Include routers
-app.include_router(test_api.router, prefix="/api/test", tags=["Google API Testing"])
+# Include API routes
+app.include_router(router, prefix="/api/v1", tags=["TSP Routes"])
 
+# Root endpoint
 @app.get("/")
 async def root():
-    """Root endpoint - API health check"""
+    """Root endpoint with API information"""
     return {
-        "message": "Harrisonburg Explorer API is running!",
-        "status": "healthy",
+        "message": "TSP Route Optimizer API",
         "version": "1.0.0",
-        "docs": "Visit /docs for API documentation"
+        "docs": "/docs",
+        "health": "/api/v1/health"
     }
 
-@app.get("/health")
-async def health_check():
-    """Health check endpoint for monitoring"""
-    return {
-        "status": "healthy",
-        "timestamp": datetime.now().isoformat(),
-        "service": "harrisonburg-explorer-api"
-    }
+if __name__ == "__main__":
+    import uvicorn
+    
+    # Get port from environment or default to 8000
+    port = int(os.getenv("PORT", "8000"))
+    
+    uvicorn.run(
+        "main:app",
+        host="0.0.0.0",
+        port=port,
+        reload=True  # Enable auto-reload in development
+    )
